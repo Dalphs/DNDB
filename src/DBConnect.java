@@ -48,32 +48,80 @@ public class DBConnect {
         }
     }
 
-    public void insert(String name){
+    public void deposit(double amount, int accountID, int customerID){
         try{
-            String query = "INSERT INTO datetest (navn) VALUES ('" + name + "');";
+            String query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + accountID + ";";
             st.executeUpdate(query);
-
-        }catch (Exception ex){
-            System.out.println("Error: " + ex);
-        }
-    }
-
-    public void delete(String name){
-        try{
-            String query = "DELETE FROM datetest WHERE navn = '" + name + "';";
+            query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
             st.executeUpdate(query);
+            query = "INSERT INTO deposits (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
+            st.executeUpdate(query);
+            updateTotalSavings(customerID);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
     }
 
-    public void update (){
+    public void withdraw(double amount, int accountID, int customerID){
         try{
-            String query = "update mathtest SET dectal = tal * dectal";
-            st.executeUpdate(query);
-        }catch(Exception ex) {
+            if(sufficientFunds(amount, accountID)){
+                String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + accountID + ";";
+                st.executeUpdate(query);
+                query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
+                st.executeUpdate(query);
+                query = "INSERT INTO withdrawals (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
+                st.executeUpdate(query);
+                updateTotalSavings(customerID);
+            }else {
+                System.out.println("Insufficient funds");
+            }
+
+        }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
+    }
+
+    public void transfer(double amount, int senderUserID, int senderAccountID, int receiverUserID, int receiverAccountID){
+        try{
+            if(sufficientFunds(amount, senderAccountID)) {
+                String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + senderAccountID + ";";
+                st.executeUpdate(query);
+                query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + receiverAccountID + ";";
+                st.executeUpdate(query);
+                query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
+                st.executeUpdate(query);
+                query = "INSERT INTO transfers (transaction_id, sender, receiver) VALUES (" + getTransactionID() + ", " + senderAccountID + ", " + receiverAccountID + ");";
+                st.executeUpdate(query);
+                updateTotalSavings(senderUserID);
+                updateTotalSavings(receiverUserID);
+
+            }else{
+                System.out.println("Insufficient funds");
+            }
+
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void addInterests(int accountID, int customerID, char period){
+
+        double rate = getInterestRate(accountID);
+        String query = "";
+        if(period == 'y')
+            rate = 1 + rate;
+        else if (period == 'c')
+            rate = Math.pow(1 + rate, 1/12.0);
+        else if (period == 'd')
+            rate = Math.pow(1 + rate, 1/365.0);
+        try {
+            query = "UPDATE accounts SET balance = balance * " + rate + " WHERE account_id = " + accountID + ";";
+            st.executeUpdate(query);
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+        updateTotalSavings(customerID);
+        updateTotalLoans(customerID);
     }
 
     public void createUser(int status){
@@ -89,9 +137,9 @@ public class DBConnect {
         }
     }
 
-    public void editUser(String name, String newName){
+    public void editUser(int customerID, String newName){
         try{
-            String query = "UPDATE user SET name = '" + newName + "' WHERE name = '" + name + "';";
+            String query = "UPDATE user SET name = '" + newName + "' WHERE customer_id = '" + customerID + "';";
             st.executeUpdate(query);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
@@ -186,62 +234,6 @@ public class DBConnect {
         }
     }
 
-    public void deposit(double amount, int accountID, int customerID){
-        try{
-            String query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + accountID + ";";
-            st.executeUpdate(query);
-            query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
-            st.executeUpdate(query);
-            query = "INSERT INTO deposits (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
-            st.executeUpdate(query);
-            updateTotalSavings(customerID);
-        }catch(Exception ex){
-            System.out.println("Error: " + ex);
-        }
-    }
-
-    public void withdraw(double amount, int accountID, int customerID){
-        try{
-            if(sufficientFunds(amount, accountID)){
-            String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + accountID + ";";
-            st.executeUpdate(query);
-            query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
-            st.executeUpdate(query);
-            query = "INSERT INTO withdrawals (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
-            st.executeUpdate(query);
-            updateTotalSavings(customerID);
-            }else {
-                System.out.println("Insufficient funds");
-            }
-
-        }catch(Exception ex){
-            System.out.println("Error: " + ex);
-        }
-    }
-
-    public void transfer(double amount, int senderUserID, int senderAccountID, int receiverUserID, int receiverAccountID){
-        try{
-            if(sufficientFunds(amount, senderAccountID)) {
-                String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + senderAccountID + ";";
-                st.executeUpdate(query);
-                query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + receiverAccountID + ";";
-                st.executeUpdate(query);
-                query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
-                st.executeUpdate(query);
-                query = "INSERT INTO transfers (transaction_id, sender, receiver) VALUES (" + getTransactionID() + ", " + senderAccountID + ", " + receiverAccountID + ");";
-                st.executeUpdate(query);
-                updateTotalSavings(senderUserID);
-                updateTotalSavings(receiverUserID);
-
-            }else{
-                System.out.println("Insufficient funds");
-            }
-
-        }catch(Exception ex){
-            System.out.println("Error: " + ex);
-        }
-    }
-
     public boolean sufficientFunds(double amount, int accountID){
         boolean temp = false;
         try{
@@ -268,6 +260,19 @@ public class DBConnect {
             System.out.println(ex);
         }
         return temp;
+    }
+
+    public double getInterestRate(int accountID){
+        double rate = 0;
+        try{
+            String query = "SELECT yearly_rate FROM accounts WHERE account_id = " + accountID + ";";
+            rs = st.executeQuery(query);
+            rs.next();
+            rate = rs.getDouble("yearly_rate");
+        }catch (Exception ex){
+            System.out.println(ex);
+        }
+        return rate;
     }
 
 }
