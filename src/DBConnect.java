@@ -83,7 +83,24 @@ public class DBConnect {
                     "VALUES ('" + Generator.generateName() + "', '" + Generator.generateAdress() + "', '" +
                     Generator.generateCity(rand) + "', '" + Generator.generatePostalCode(rand) + "', " + 0 + ", " + 0 +
                     ", " + status + ");";
-            ;
+            st.executeUpdate(query);
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void editUser(String name, String newName){
+        try{
+            String query = "UPDATE user SET name = '" + newName + "' WHERE name = '" + name + "';";
+            st.executeUpdate(query);
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void deleteUser(int customerID){
+        try{
+            String query = "DELETE FROM user WHERE customer_id = " + customerID + ";";
             st.executeUpdate(query);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
