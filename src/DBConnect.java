@@ -2,6 +2,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class DBConnect {
     private Connection con;
@@ -19,7 +21,7 @@ public class DBConnect {
         }
     }
 
-    public void deposit(double amount, int accountID, int customerID){
+    public void deposit(double amount, int accountID){
         try{
             String query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + accountID + ";";
             st.executeUpdate(query);
@@ -27,13 +29,13 @@ public class DBConnect {
             st.executeUpdate(query);
             query = "INSERT INTO deposits (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
             st.executeUpdate(query);
-            updateTotalSavings(customerID);
+            updateTotalSavings(getUserID(accountID));
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
     }
 
-    public void withdraw(double amount, int accountID, int customerID){
+    public void withdraw(double amount, int accountID){
         try{
             if(sufficientFunds(amount, accountID)){
                 String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + accountID + ";";
@@ -42,7 +44,7 @@ public class DBConnect {
                 st.executeUpdate(query);
                 query = "INSERT INTO withdrawals (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
                 st.executeUpdate(query);
-                updateTotalSavings(customerID);
+                updateTotalSavings(getUserID(accountID));
             }else {
                 System.out.println("Insufficient funds");
             }
@@ -231,7 +233,7 @@ public class DBConnect {
 
     public void searchCities(String... cities){
         try{
-            String query = "SELECT * FROM user where city = '" + cities[0];
+            String query = "SELECT * FROM user WHERE city = '" + cities[0];
             for (int i = 1; i < cities.length; i++) {
                 query = query + "' OR '" + cities[i];
             }
@@ -259,6 +261,61 @@ public class DBConnect {
                 System.out.println();
 
             }
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void convertToEuro(int accountID){
+        try{
+            String query = "SELECT * FROM accounts WHERE account_id = " + accountID + ";";
+            rs = st.executeQuery(query);
+            System.out.printf("%-15s%-20s%-25s%-15s%-18s%-15s", "account id", "customer id", "balance", "yearly rate",
+                    "type", "date of creation");
+            System.out.println("\n-------------------------------------------------------------------------------" +
+                    "----------------------------------");
+            while(rs.next()){
+                String accountID1 = rs.getString("account_id");
+                String customerID = rs.getString("customer_id");
+                double balance = rs.getDouble("balance") / 7.46;
+                String yearlyRate = rs.getString("yearly_rate");
+                String type = rs.getString("type");
+                String dateOfCreation = rs.getString("date_of_creation");
+                System.out.printf("%-15s%-20s%-25.2f%-15s%-18s%-15s", accountID1, customerID, balance, yearlyRate, type, dateOfCreation);
+                System.out.println();
+
+            }
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void findRussianOligarch(){
+        try{
+            String query = "SELECT * FROM `user` WHERE city = 'Frederikssund' AND postal_code != 3600";
+            rs = st.executeQuery(query);
+            rs.next();
+            System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
+                    "postal Code", "total loans", "total savings", "status", "date of creation");
+            System.out.println("\n-------------------------------------------------------------------------------" +
+                    "-----------------------------------------------------------");
+            System.out.printf("%-4s%-20s%-25s%-20s%-15s%-15.2f%-15.2f%-8s%-15s", rs.getString("customer_id"),
+                    rs.getString("name"), rs.getString("address"), rs.getString("city"),
+                    rs.getString("postal_code"), rs.getDouble("total_loans"), rs.getDouble("total_savings")
+                    , rs.getString("status"), rs.getString("date_of_creation"));
+
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void createRussianOligarch(){
+        try {
+            int rand = (int) (Math.random() * 4);
+            String query = "INSERT INTO user (name, address, city, postal_code, total_loans, total_savings, status) " +
+                    "VALUES ('" + Generator.generateName() + "', '" + Generator.generateAdress() + "', 'Frederikssund', '4800', "
+                    + 0 + ", " + 0 + ", " + 0 + ");";
+            st.executeUpdate(query);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
@@ -395,6 +452,73 @@ public class DBConnect {
             System.out.println("Error: " + ex);
         }
         return userID;
+    }
+
+    public void CreateMultipleUsersAndAccounts(){
+        for (int i = 20; i < 1000; i++) {
+            double[] checkInRates = {0.00125, 0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.01625, 0.0175, 0.02};
+            int status = 0;
+            int rand = (int) (Math.random() * 10);
+            if( rand == 1)
+                status = 1;
+            createUser(status);
+            createCheckInAccount(i, randomBalance(), checkInRates[rand]);
+            if(rand < 5) {
+                rand = (int) (Math.random() * 10);
+                double[] loanRates = {0.025, 0.03, 0.035, 0.0375, 0.04, 0.045, 0.055, 0.065, 0.075, 0.1};
+                createLoanAccount(i, randomBalance(), loanRates[rand]);
+            }
+            if (rand > 7){
+                rand = (int) (Math.random() * 10);
+                double[] savingsRates = {0.0125, 0.015, 0.01625, 0.0175, 0.02, 0.0225, 0.025, 0.02625, 0.0275, 0.3};
+                createSavingsAccount(i, randomBalance(), savingsRates[rand]);
+
+            }
+        }
+    }
+
+    public void createTransfers(){
+        try{
+            ArrayList<Integer> accountIDs = new ArrayList<>();
+            String query = "SELECT account_id FROM accounts WHERE type = 0 OR type = 2";
+            int[] cash = {5, 10, 15, 20, 25, 30, 40,  50 , 75, 100, 200};
+            rs = st.executeQuery(query);
+            while(rs.next()){
+                accountIDs.add(rs.getInt("account_id"));
+            }
+            Collections.shuffle(accountIDs);
+            for (int i = 1; i < accountIDs.size(); i++) {
+                double amount = ((int) (Math.random() * 25000)) / 100.0;
+                transfer(amount, accountIDs.get(i), accountIDs.get(i - 1));
+                if(i % 2 == 0){
+                    withdraw(cash[i % 11], accountIDs.get(i));
+                } else{
+                    deposit(cash[i % 11], accountIDs.get(i));
+                }
+            }
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public static double randomBalance(){
+        double rand = 0;
+        int generator = (int) (Math.random() * 3);
+        if(generator == 0) {
+            rand = ((int) (Math.random() * 1000000000)) / 100.0;
+            if (rand > 1000000)
+                rand = ((int) rand) / 100.0;
+        } else if(generator == 1){
+            rand = ((int) (Math.random() * 10000000)) / 100.0;
+            if (rand > 10000)
+                rand = ((int) rand) / 100.0;
+        }else if(generator == 2){
+            rand = ((int) (Math.random() * 1000000)) / 100.0;
+            if (rand > 1000)
+                rand = ((int) rand) / 100.0;
+        }
+
+        return rand;
     }
 
 }
