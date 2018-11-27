@@ -25,3 +25,6 @@ Tabellerne transactions og deposits opdateres.
 * getAccounts udskriver alle konti, 'a' udskriver i alfabetisk rækkefølge, 'd' udskriver i kronologisk rækkefølge, s udksriver fra værdien af samlet opsparing, 'l' udkriver fra værdien af samlede lån
 
 * rollBackTransfer takes a transactionID and reverses by making a new transfer between the two accounts matching the amount
+
+* searchCtites tager imod et vilkårligt antal byer og søger efter kunder der bor i de byer
+
