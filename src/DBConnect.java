@@ -19,35 +19,6 @@ public class DBConnect {
         }
     }
 
-    public void getData(){
-        try{
-            String query = "SELECT * FROM user";
-            rs = st.executeQuery(query);
-            System.out.printf("%-4s%-20s%-15s%-12s%-18s%-15s%-7s%-7s%-15s", "id", "name", "address", "city",
-                    "postal Code", "total loans", "total savings", "status", "timestamp");
-            System.out.println("\n-------------------------------------------------------------------------------" +
-                    "----------------------------------");
-            while(rs.next()){
-                String id = rs.getString("customer_id");
-                String name = rs.getString("name");
-                String address = rs.getString("address");
-                String city = rs.getString("city");
-                String postalCode = rs.getString("postal_code");
-                String totalLoans = rs.getString("total_loans");
-                String totalSavings = rs.getString("total_savings");
-                String status = rs.getString("status");
-                String dateOfCreation = rs.getString("date_of_creation");
-
-                System.out.printf("%-4s%-20s%-15s%-15s%-15s%-15s%-7s%-7s%-15s", id, name, address, city, postalCode,
-                totalLoans, totalSavings, status, dateOfCreation);
-                System.out.println();
-
-            }
-        }catch(Exception ex){
-            System.out.println("Error: " + ex);
-        }
-    }
-
     public void deposit(double amount, int accountID, int customerID){
         try{
             String query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + accountID + ";";
@@ -150,6 +121,92 @@ public class DBConnect {
         try{
             String query = "DELETE FROM user WHERE customer_id = " + customerID + ";";
             st.executeUpdate(query);
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void getUsers(char orderBy){
+        try{
+            String query = "";
+
+            switch(orderBy){
+                case 'a':
+                    query = "SELECT * FROM user ORDER BY name ASC"; break;
+                case 'd':
+                    query = "SELECT * FROM user ORDER BY date_of_creation ASC"; break;
+                case 's':
+                    query = "SELECT * FROM user ORDER BY total_savings DESC"; break;
+                case 'l':
+                    query = "SELECT * FROM user ORDER BY total_loans DESC"; break;
+            }
+
+            rs = st.executeQuery(query);
+            System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
+                    "postal Code", "total loans", "total savings", "status", "date of creation");
+            System.out.println("\n-------------------------------------------------------------------------------" +
+                    "-----------------------------------------------------------");
+            while(rs.next()){
+                String id = rs.getString("customer_id");
+                String name = rs.getString("name");
+                String address = rs.getString("address");
+                String city = rs.getString("city");
+                String postalCode = rs.getString("postal_code");
+                double totalLoans = rs.getDouble("total_loans");
+                double totalSavings = rs.getDouble("total_savings");
+                String status = rs.getString("status");
+                String dateOfCreation = rs.getString("date_of_creation");
+
+                System.out.printf("%-4s%-20s%-25s%-20s%-15s%-15.2f%-15.2f%-8s%-15s", id, name, address, city, postalCode,
+                        totalLoans, totalSavings, status, dateOfCreation);
+                System.out.println();
+
+            }
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+    }
+
+    public void getAccounts(char orderBy){
+        try{
+            String name = "";
+            String query = "";
+
+            switch(orderBy){
+                case 'a':
+                    query = "SELECT user.name, accounts.account_id, accounts.customer_id, accounts.balance, " +
+                            "accounts.yearly_rate, accounts.type, accounts.date_of_creation FROM accounts " +
+                            "LEFT JOIN user ON user.customer_id = accounts.customer_id ORDER BY user.name ASC\n"; break;
+                case 'd':
+                    query = "SELECT * FROM accounts ORDER BY date_of_creation ASC"; break;
+                case 's':
+                    query = "SELECT * FROM accounts ORDER BY balance DESC"; break;
+                case 'l':
+                    query = "SELECT * FROM accounts ORDER BY balance ASC"; break;
+            }
+
+            rs = st.executeQuery(query);
+            if(orderBy == 'a')
+                System.out.printf("%-25s", "name");
+            System.out.printf("%-15s%-20s%-25s%-15s%-18s%-15s", "account id", "customer id", "balance", "yearly rate",
+                    "type", "date of creation");
+            System.out.println("\n-------------------------------------------------------------------------------" +
+                    "----------------------------------");
+            while(rs.next()){
+                if(orderBy == 'a')
+                    name = rs.getString("name");
+                String accountID = rs.getString("account_id");
+                String customerID = rs.getString("customer_id");
+                double balance = rs.getDouble("balance");
+                String yearlyRate = rs.getString("yearly_rate");
+                String type = rs.getString("type");
+                String dateOfCreation = rs.getString("date_of_creation");
+                if(orderBy == 'a')
+                    System.out.printf("%-25s", name);
+                System.out.printf("%-15s%-20s%-25.2f%-15s%-18s%-15s", accountID, customerID, balance, yearlyRate, type, dateOfCreation);
+                System.out.println();
+
+            }
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
