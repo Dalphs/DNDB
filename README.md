@@ -12,9 +12,7 @@ Derudover opdateres tabellerne transactions og withdrawals.
 Derudover opdateres alle stede kontiernes status gøres op.
 Tabellerne transactions og deposits opdateres.
 
-* Rentetilskrivning
-
-* Rentetrækning
+* addInterest tilføjer renter til balance på en specifik konto og opdatere alle steder konotens status gøres op. Metoden fungerer både på opsparing og lån, da lån fremgår som negative tal
 
 * createUser opretter en ny bruger i systemet enten ansat eller kunde med tilfældig navn og adresse
 
