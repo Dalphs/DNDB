@@ -19,3 +19,8 @@ Tabellerne transactions og deposits opdateres.
 * editUser kan ændre brugerens navn i tilfælde af navneforandring
 
 * deleteUser kan slette en brguer ud fra dens customer_id
+
+* getUsers udskriver alle brugere, 'a' udskriver i alfabetisk rækkefølge, 'd' udksriver kronologisk i forhold til oprettelse, 's' udskriver i forhold til total opsparing og 'l' udskriver i forhold til værdien af samlede lån
+
+* getAccounts udskriver alle konti, 'a' udskriver i alfabetisk rækkefølge, 'd' udskriver i kronologisk rækkefølge, s udksriver fra værdien af samlet opsparing, 'l' udkriver fra værdien af samlede lån
+
