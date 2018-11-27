@@ -227,7 +227,41 @@ public class DBConnect {
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
+    }
 
+    public void searchCities(String... cities){
+        try{
+            String query = "SELECT * FROM user where city = '" + cities[0];
+            for (int i = 1; i < cities.length; i++) {
+                query = query + "' OR '" + cities[i];
+            }
+            query = query + "';";
+            System.out.println(query);
+            rs = st.executeQuery(query);
+
+            System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
+                    "postal Code", "total loans", "total savings", "status", "date of creation");
+            System.out.println("\n-------------------------------------------------------------------------------" +
+                    "-----------------------------------------------------------");
+            while(rs.next()){
+                String id = rs.getString("customer_id");
+                String name = rs.getString("name");
+                String address = rs.getString("address");
+                String city = rs.getString("city");
+                String postalCode = rs.getString("postal_code");
+                double totalLoans = rs.getDouble("total_loans");
+                double totalSavings = rs.getDouble("total_savings");
+                String status = rs.getString("status");
+                String dateOfCreation = rs.getString("date_of_creation");
+
+                System.out.printf("%-4s%-20s%-25s%-20s%-15s%-15.2f%-15.2f%-8s%-15s", id, name, address, city, postalCode,
+                        totalLoans, totalSavings, status, dateOfCreation);
+                System.out.println();
+
+            }
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
     }
 
     public void createSavingsAccount(int customerID, double initialBalance, double yearlyRate){
