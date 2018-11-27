@@ -1,6 +1,6 @@
 # DNDB
 
-## Methoder
+## Metoder
 
 * **deposit** indsætter et beløb på en specifik konto og opdaterer alle steder kontoens status gøres op.
 Derudover opdateres tabellerne transactions og deposits.
