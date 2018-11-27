@@ -52,7 +52,7 @@ public class DBConnect {
         }
     }
 
-    public void transfer(double amount, int senderUserID, int senderAccountID, int receiverUserID, int receiverAccountID){
+    public void transfer(double amount, int senderAccountID, int receiverAccountID){
         try{
             if(sufficientFunds(amount, senderAccountID)) {
                 String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + senderAccountID + ";";
@@ -63,8 +63,8 @@ public class DBConnect {
                 st.executeUpdate(query);
                 query = "INSERT INTO transfers (transaction_id, sender, receiver) VALUES (" + getTransactionID() + ", " + senderAccountID + ", " + receiverAccountID + ");";
                 st.executeUpdate(query);
-                updateTotalSavings(senderUserID);
-                updateTotalSavings(receiverUserID);
+                updateTotalSavings(getUserID(senderAccountID));
+                updateTotalSavings(getUserID(receiverAccountID));
 
             }else{
                 System.out.println("Insufficient funds");
@@ -212,6 +212,24 @@ public class DBConnect {
         }
     }
 
+    public void rollBackTransfer(int transactionID){
+        try {
+            String query = "SELECT amount FROM transactions WHERE transaction_id = " + transactionID + ";";
+            rs = st.executeQuery(query);
+            rs.next();
+            double amount = rs.getDouble("amount");
+            query = "SELECT sender, receiver FROM transfers where transaction_id = " + transactionID + ";";
+            rs = st.executeQuery(query);
+            rs.next();
+            int senderAccountID = rs.getInt("sender");
+            int receiverAccountID = rs.getInt("receiver");
+            transfer(amount, receiverAccountID, senderAccountID);
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+
+    }
+
     public void createSavingsAccount(int customerID, double initialBalance, double yearlyRate){
         try{
             String query = "INSERT INTO accounts (customer_id, balance, yearly_rate, type) VALUES (" + customerID + ", " +
@@ -330,6 +348,19 @@ public class DBConnect {
             System.out.println(ex);
         }
         return rate;
+    }
+
+    public int getUserID(int accountID){
+        int userID = 0;
+        try{
+            String query = "SELECT customer_id FROM accounts WHERE account_id = " + accountID + ";";
+            rs = st.executeQuery(query);
+            rs.next();
+            userID = rs.getInt("customer_id");
+        }catch(Exception ex){
+            System.out.println("Error: " + ex);
+        }
+        return userID;
     }
 
 }
