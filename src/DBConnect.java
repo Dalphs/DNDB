@@ -6,46 +6,63 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class DBConnect {
+    //Class variables, instances of the Connection, Statement and ResulSet class
     private Connection con;
     private Statement st;
     private ResultSet rs;
 
     public DBConnect (){
+        //Every time we want to connect to the database, we need to use try-catch to catch any exception
         try{
 
+            //Assigning the con and st variable. The con variable connects to the dndb database
             con = DriverManager.getConnection("jdbc:mysql://localhost/dndb?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", "root", "");
             st = con.createStatement();
 
         }catch(Exception ex){
+            //Printing the Exception to the console
             System.out.println("Error: " + ex);
         }
     }
 
+    //Deposit method takes two parametres, amount and accountID
     public void deposit(double amount, int accountID){
         try{
+            //Creating three sql queries and executing them. The first statement changes the balance on the account.
+            //The second creates a transaction and the third creates a deposit
             String query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + accountID + ";";
             st.executeUpdate(query);
             query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
             st.executeUpdate(query);
             query = "INSERT INTO deposits (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
             st.executeUpdate(query);
+
+            //Updating the column total-savings in user table for the owner of the account
             updateTotalSavings(getUserID(accountID));
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
     }
 
+    //Withdraw method takes two parametres, amount and accountID
     public void withdraw(double amount, int accountID){
         try{
+            //Only executes the code if there is enough money in the account
             if(sufficientFunds(amount, accountID)){
+
+                //Creates three sql queries. First statement updates the balance on the account.
+                //Second creates a transaction and third creates a withdraw
                 String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + accountID + ";";
                 st.executeUpdate(query);
                 query = "INSERT INTO transactions (amount) VALUES (" + amount + ");";
                 st.executeUpdate(query);
                 query = "INSERT INTO withdrawals (transaction_id, account) VALUES (" + getTransactionID() + ", " + accountID + ");";
                 st.executeUpdate(query);
+
+                //Updates the total_saving column for the owner of the account in the user table
                 updateTotalSavings(getUserID(accountID));
             }else {
+                //In case there is not enough mooney in the account, Insufficient funds is printed in the console
                 System.out.println("Insufficient funds");
             }
 
@@ -54,9 +71,14 @@ public class DBConnect {
         }
     }
 
+    //Tansfer method takes three parametres, amount, senderID and ReceiverID
     public void transfer(double amount, int senderAccountID, int receiverAccountID){
         try{
+            //The transfer is only excecuted if there is enough money in the senders account
             if(sufficientFunds(amount, senderAccountID)) {
+
+                //Creating 4 sql queries, first substracts the money from the senderAccount, second adds the amount to the receiverAccount
+                //Third creates a transsaction, and fourth creates a transfer
                 String query = "UPDATE accounts SET balance = balance - " + amount + " WHERE account_id = " + senderAccountID + ";";
                 st.executeUpdate(query);
                 query = "UPDATE accounts SET balance = balance + " + amount + " WHERE account_id = " + receiverAccountID + ";";
@@ -65,6 +87,8 @@ public class DBConnect {
                 st.executeUpdate(query);
                 query = "INSERT INTO transfers (transaction_id, sender, receiver) VALUES (" + getTransactionID() + ", " + senderAccountID + ", " + receiverAccountID + ");";
                 st.executeUpdate(query);
+
+                //Updates the total_savings column for the owners of the two accounts
                 updateTotalSavings(getUserID(senderAccountID));
                 updateTotalSavings(getUserID(receiverAccountID));
 
@@ -77,29 +101,38 @@ public class DBConnect {
         }
     }
 
-    public void addInterests(int accountID, int customerID, char period){
-
+    //addInterests method takes two parametres, accountID and period
+    public void addInterests(int accountID, char period){
+        //creating two method variables
         double rate = getInterestRate(accountID);
         String query = "";
+
+        //This if-else block takes the period parameter and calculates the rate for the account
         if(period == 'y')
             rate = 1 + rate;
-        else if (period == 'c')
+        else if (period == 'm')
             rate = Math.pow(1 + rate, 1/12.0);
         else if (period == 'd')
             rate = Math.pow(1 + rate, 1/365.0);
         try {
+            //Assigning the query woth a sql query, that changes the balance in the account according with the rate and period
             query = "UPDATE accounts SET balance = balance * " + rate + " WHERE account_id = " + accountID + ";";
             st.executeUpdate(query);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
-        updateTotalSavings(customerID);
-        updateTotalLoans(customerID);
+        //Updates total_savings and total_loans column for the owner of the account
+        updateTotalSavings(getUserID(accountID));
+        updateTotalLoans(getUserID(accountID));
     }
 
+    //createUser method takes on parameter, status. 0 = customer, 1 = employee
     public void createUser(int status){
         try {
+            //Creating a random number from 0-3, to get city and postal code
             int rand = (int) (Math.random() * 4);
+            //The query creats a new user, where the name, adress, city and postal_code,
+            // is generated by the Generator classs' static methods, as well as using the received status
             String query = "INSERT INTO user (name, address, city, postal_code, total_loans, total_savings, status) " +
                     "VALUES ('" + Generator.generateName() + "', '" + Generator.generateAdress() + "', '" +
                     Generator.generateCity(rand) + "', '" + Generator.generatePostalCode(rand) + "', " + 0 + ", " + 0 +
@@ -110,8 +143,10 @@ public class DBConnect {
         }
     }
 
+    //editUser method takes two parametres, customerID and newName
     public void editUser(int customerID, String newName){
         try{
+            //Creating a sql query that finds the customer identified by the customerID and changes the name
             String query = "UPDATE user SET name = '" + newName + "' WHERE customer_id = '" + customerID + "';";
             st.executeUpdate(query);
         }catch(Exception ex){
@@ -119,8 +154,10 @@ public class DBConnect {
         }
     }
 
+    //deleteUser method takes one parameter, customerID
     public void deleteUser(int customerID){
         try{
+            //Creating sql query that deletes a user from the user table identified by its customer-id
             String query = "DELETE FROM user WHERE customer_id = " + customerID + ";";
             st.executeUpdate(query);
         }catch(Exception ex){
@@ -128,10 +165,14 @@ public class DBConnect {
         }
     }
 
+    //getUser method takes one parameter, orderBy, which wil determine how the output is ordered
     public void getUsers(char orderBy){
         try{
+            //Creating a string to store out sql query
             String query = "";
 
+            //If orderBy is a it wil be alphabetical, d wil be chronological, s will be by total_savings
+            //and l will be total_loans
             switch(orderBy){
                 case 'a':
                     query = "SELECT * FROM user ORDER BY name ASC"; break;
@@ -144,10 +185,12 @@ public class DBConnect {
             }
 
             rs = st.executeQuery(query);
+            //Printing the header for the table using formatted text, to ensure a uniform look
             System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
                     "postal Code", "total loans", "total savings", "status", "date of creation");
             System.out.println("\n-------------------------------------------------------------------------------" +
                     "-----------------------------------------------------------");
+            //The wile loop prints all the users from the resultSet using formatted text
             while(rs.next()){
                 String id = rs.getString("customer_id");
                 String name = rs.getString("name");
@@ -171,11 +214,15 @@ public class DBConnect {
 
     public void getAccounts(char orderBy){
         try{
+            //Two String variables, one to store the name and the other to store a sql query
             String name = "";
             String query = "";
 
+            //Selects in what order the accounts will be printed.
             switch(orderBy){
                 case 'a':
+                    //For printing alphabetically I had to make a left join between accounts and users,
+                    // since the accounts table doesnt store names of the users
                     query = "SELECT user.name, accounts.account_id, accounts.customer_id, accounts.balance, " +
                             "accounts.yearly_rate, accounts.type, accounts.date_of_creation FROM accounts " +
                             "LEFT JOIN user ON user.customer_id = accounts.customer_id ORDER BY user.name ASC\n"; break;
@@ -188,12 +235,16 @@ public class DBConnect {
             }
 
             rs = st.executeQuery(query);
+
+            //Printing a header for the table using formatted text
             if(orderBy == 'a')
                 System.out.printf("%-25s", "name");
             System.out.printf("%-15s%-20s%-25s%-15s%-18s%-15s", "account id", "customer id", "balance", "yearly rate",
                     "type", "date of creation");
             System.out.println("\n-------------------------------------------------------------------------------" +
                     "----------------------------------");
+
+            //Printing all results to the console using formatted text
             while(rs.next()){
                 if(orderBy == 'a')
                     name = rs.getString("name");
@@ -214,37 +265,49 @@ public class DBConnect {
         }
     }
 
+    //rollBackTransfer takes one parameter, transactionID
     public void rollBackTransfer(int transactionID){
         try {
+            //The first sql query retrieves the amount from the specific transaction and saves it in the variable amount
             String query = "SELECT amount FROM transactions WHERE transaction_id = " + transactionID + ";";
             rs = st.executeQuery(query);
             rs.next();
             double amount = rs.getDouble("amount");
+
+            //This query retrieves the senderAcconutID and receiverAccountID and seaves it in two variables
             query = "SELECT sender, receiver FROM transfers where transaction_id = " + transactionID + ";";
             rs = st.executeQuery(query);
             rs.next();
             int senderAccountID = rs.getInt("sender");
             int receiverAccountID = rs.getInt("receiver");
+
+            //Then the transfer method is called to create a new transfer,
+            //only the sender and receiver is reversed, the amount is the same as the initial transfer
             transfer(amount, receiverAccountID, senderAccountID);
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
     }
 
+    //searchCities method takes a variable number of strings as parametres
     public void searchCities(String... cities){
         try{
+            //This creates an sql query with all the cities represented
             String query = "SELECT * FROM user WHERE city = '" + cities[0];
             for (int i = 1; i < cities.length; i++) {
-                query = query + "' OR '" + cities[i];
+                query = query + "' OR city = '" + cities[i];
             }
             query = query + "';";
-            System.out.println(query);
+
             rs = st.executeQuery(query);
 
+            //This prints the header for the data using formatted text
             System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
                     "postal Code", "total loans", "total savings", "status", "date of creation");
             System.out.println("\n-------------------------------------------------------------------------------" +
                     "-----------------------------------------------------------");
+
+            //This prints all the retrived data
             while(rs.next()){
                 String id = rs.getString("customer_id");
                 String name = rs.getString("name");
@@ -266,14 +329,20 @@ public class DBConnect {
         }
     }
 
+    //convertToEuro takes one parameter, accountID
     public void convertToEuro(int accountID){
         try{
+            //This query retrieves the specified account
             String query = "SELECT * FROM accounts WHERE account_id = " + accountID + ";";
             rs = st.executeQuery(query);
+
+            //This is the header for the account
             System.out.printf("%-15s%-20s%-25s%-15s%-18s%-15s", "account id", "customer id", "balance", "yearly rate",
                     "type", "date of creation");
             System.out.println("\n-------------------------------------------------------------------------------" +
                     "----------------------------------");
+
+            //This prints the retrived data
             while(rs.next()){
                 String accountID1 = rs.getString("account_id");
                 String customerID = rs.getString("customer_id");
@@ -290,15 +359,21 @@ public class DBConnect {
         }
     }
 
+    //findRussianOligarch does not take any parametres
     public void findRussianOligarch(){
         try{
+            //This sql query finds all users that have Frederikssund listed, but does not have the correct postal_code
             String query = "SELECT * FROM `user` WHERE city = 'Frederikssund' AND postal_code != 3600";
             rs = st.executeQuery(query);
             rs.next();
+
+            //This is the header for the output
             System.out.printf("%-4s%-20s%-25s%-15s%-18s%-15s%-15s%-10s%-10s", "id", "name", "address", "city",
                     "postal Code", "total loans", "total savings", "status", "date of creation");
             System.out.println("\n-------------------------------------------------------------------------------" +
                     "-----------------------------------------------------------");
+
+            //This prints the data retrieved
             System.out.printf("%-4s%-20s%-25s%-20s%-15s%-15.2f%-15.2f%-8s%-15s", rs.getString("customer_id"),
                     rs.getString("name"), rs.getString("address"), rs.getString("city"),
                     rs.getString("postal_code"), rs.getDouble("total_loans"), rs.getDouble("total_savings")

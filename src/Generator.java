@@ -16,7 +16,7 @@ public class Generator {
     }
 
     public static String generateCity(int rand){
-        String[] citys = {"Roskilde", " Frederiksberg", "Glostrup", "Frederikssund"};
+        String[] citys = {"Roskilde", "Frederiksberg", "Glostrup", "Frederikssund"};
         return citys[rand];
     }
 
