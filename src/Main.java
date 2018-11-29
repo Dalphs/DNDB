@@ -8,6 +8,7 @@ public class Main {
 
         //Her er eksempler på brug af mine metoder til hver delopgave.
         //Der står også hvilken linje metoderne kan findes på i DBConnect-klassen
+        //Jeg har udkommenteret alle eksempler så det hele ikke køres på en gang
 
         //1. Indbetaling, skal bruge et beløb og et konto-ID (Linje 29)
         //connect.deposit(100, 1);
@@ -20,9 +21,17 @@ public class Main {
 
         //4-5. Rentetilskrivning og rentetrækning 'y' er årlig, 'm' er månedlig og 'd' er daglig
         //Fungerer både som tilskrivning og trækning da lån er bogført med negative tal (Linje 105)
+
+        //Rentilskrivning på konto 1800:
+        //connect.addInterests(1800, 'y');
+        //connect.addInterests(1800, 'm');
+        //connect.addInterests(1800, 'd');
+
+        //Rentetrækning på konto 4:
         //connect.addInterests(4, 'y');
         //connect.addInterests(4, 'm');
         //connect.addInterests(4, 'd');
+
 
         //6. Oprettelse af bruger, i dette tilfælde en auotgeneret. 0 som parameter generere en kunde
         // og 1 generere en ansat (Linje 129)

@@ -207,6 +207,7 @@ public class DBConnect {
                 System.out.println();
 
             }
+            con.close();
         }catch(Exception ex){
             System.out.println("Error: " + ex);
         }
@@ -384,6 +385,7 @@ public class DBConnect {
         }
     }
 
+    //Creates a user with mismatching postalcode and city
     public void createRussianOligarch(){
         try {
             int rand = (int) (Math.random() * 4);
@@ -407,6 +409,7 @@ public class DBConnect {
         updateTotalSavings(customerID);
     }
 
+    //Method that creates a savingsaccount from customerID, initialBalacne and yearly rate
     public void createCheckInAccount(int customerID, double initialBalance, double yearlyRate){
         try{
             String query = "INSERT INTO accounts (customer_id, balance, yearly_rate, type) VALUES (" + customerID + ", " +
@@ -419,6 +422,7 @@ public class DBConnect {
         updateTotalSavings(customerID);
     }
 
+    //Method that creates a loan account from customerID, initialBalance and yearlyRate
     public void createLoanAccount(int customerID, double initialBalance, double yearlyRate){
         try{
             String query = "INSERT INTO accounts (customer_id, balance, yearly_rate, type) VALUES (" + customerID + ", " +
@@ -432,6 +436,7 @@ public class DBConnect {
         updateTotalLoans(customerID);
     }
 
+    //Method that returns the last generated accountID
     public int getAccountID(){
         int temp = 0;
         try{
@@ -445,6 +450,7 @@ public class DBConnect {
         return temp;
     }
 
+    //Method that updates the column total_loans for a user identified by customerID
     public void updateTotalLoans(int customerId){
         double total = 0;
         try{
@@ -460,6 +466,7 @@ public class DBConnect {
         }
     }
 
+    //Method that updates total savings column for a user identified by a customerID
     public void updateTotalSavings(int customerId){
         double total = 0;
         try{
@@ -475,6 +482,7 @@ public class DBConnect {
         }
     }
 
+    //Method that returns wether there is more money than a specific amount in a specific account
     public boolean sufficientFunds(double amount, int accountID){
         boolean temp = false;
         try{
@@ -490,6 +498,7 @@ public class DBConnect {
         return temp;
     }
 
+    //Method that retrieves the latest generated tansactionID
     public int getTransactionID(){
         int temp = 0;
         try{
@@ -503,6 +512,7 @@ public class DBConnect {
         return temp;
     }
 
+    //Method that retrices the interestRate form a specific account
     public double getInterestRate(int accountID){
         double rate = 0;
         try{
@@ -516,6 +526,7 @@ public class DBConnect {
         return rate;
     }
 
+    //Method that returns the userID for a specific account
     public int getUserID(int accountID){
         int userID = 0;
         try{
@@ -529,6 +540,7 @@ public class DBConnect {
         return userID;
     }
 
+    //This is the method i used to create 99 % of my users
     public void CreateMultipleUsersAndAccounts(){
         for (int i = 20; i < 1000; i++) {
             double[] checkInRates = {0.00125, 0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.01625, 0.0175, 0.02};
@@ -552,6 +564,7 @@ public class DBConnect {
         }
     }
 
+    //This is the method that created most of the 1800 transfers
     public void createTransfers(){
         try{
             ArrayList<Integer> accountIDs = new ArrayList<>();
